@@ -1,0 +1,45 @@
+#!/bin/bash
+# subir_github.sh
+# MedConnect — Script para subir el proyecto a GitHub
+# Repositorio: https://github.com/BryanGualpa/MedConect.git
+
+echo "============================================"
+echo " MedConnect — Subir proyecto a GitHub"
+echo "============================================"
+echo ""
+echo "Ejecuta estos comandos EN ORDEN en tu terminal:"
+echo ""
+echo "── PASO 1: Clonar el repositorio vacío ──────"
+echo "git clone https://github.com/BryanGualpa/MedConect.git"
+echo "cd MedConect"
+echo ""
+echo "── PASO 2: Copiar todos los archivos aquí ──"
+echo "(Copiar el contenido de la carpeta MedConnect/ que entregó Claude)"
+echo ""
+echo "── PASO 3: Configurar tu identidad Git ─────"
+echo 'git config user.name "Bryan Gualpa Meza"'
+echo 'git config user.email "tu-correo@espe.edu.ec"'
+echo ""
+echo "── PASO 4: Subir rama feature/auth (Rama 1) "
+echo "git checkout -b feature/auth"
+echo "git add ."
+echo 'git commit -m "feat: estructura base MedConnect — RF-01 al RF-09"'
+echo "git push -u origin feature/auth"
+echo ""
+echo "── PASO 5: Subir rama develop ───────────────"
+echo "git checkout -b develop"
+echo "git push -u origin develop"
+echo ""
+echo "── PASO 6: Subir rama main (principal) ──────"
+echo "git checkout main"
+echo "git push -u origin main"
+echo ""
+echo "── PASO 7: Crear rama testing ───────────────"
+echo "git checkout -b testing"
+echo "git push -u origin testing"
+echo "git checkout develop"
+echo ""
+echo "============================================"
+echo " Listo! El repositorio tendrá las ramas:"
+echo "   main | develop | testing | feature/auth"
+echo "============================================"

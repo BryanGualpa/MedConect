@@ -1,0 +1,138 @@
+// prisma/schema.prisma
+// MedConnect — Modelo de Datos
+// Ref: Documento de Arquitectura de Software — Sección 2.2.3 y Sección 4
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ENUMERACIONES ────────────────────────────────────────────────────────────
+
+enum RolUsuario {
+  PACIENTE
+  MEDICO
+  ADMIN
+}
+
+enum EstadoCita {
+  CONFIRMADA
+  REAGENDADA
+  CANCELADA
+  INASISTENCIA
+}
+
+enum DiaSemana {
+  LUNES
+  MARTES
+  MIERCOLES
+  JUEVES
+  VIERNES
+  SABADO
+}
+
+// ─── MODELOS ──────────────────────────────────────────────────────────────────
+
+/// Usuarios del sistema: pacientes, médicos y administradores
+/// RF-01 (registro), RF-02 (autenticación)
+model Usuario {
+  id            Int       @id @default(autoincrement())
+  cedula        String    @unique @db.VarChar(10)
+  nombre        String    @db.VarChar(255)
+  correo        String    @unique @db.VarChar(255)
+  passwordHash  String    @db.VarChar(255)
+  telefono      String    @db.VarChar(15)
+  rol           RolUsuario @default(PACIENTE)
+  estado        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relaciones
+  medico        Medico?
+  citas         Cita[]    @relation("PacienteCitas")
+
+  @@map("usuarios")
+}
+
+/// Especialidades médicas disponibles en el catálogo
+/// RF-03 (listado y búsqueda de especialidades)
+model Especialidad {
+  id          Int      @id @default(autoincrement())
+  nombre      String   @unique @db.VarChar(100)
+  descripcion String   @db.Text
+  imagenUrl   String   @db.VarChar(500)
+  estado      Boolean  @default(true)
+
+  // Relaciones
+  medicos     Medico[]
+
+  @@map("especialidades")
+}
+
+/// Perfil médico — extiende al usuario con atributos profesionales
+/// RF-04 (perfil médico), RF-05 (disponibilidad)
+model Medico {
+  id            Int          @id @default(autoincrement())
+  titulo        String       @db.VarChar(255)
+  descripcion   String       @db.Text
+  estado        Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+
+  // Relaciones
+  usuario       Usuario      @relation(fields: [usuarioId], references: [id], onDelete: Restrict)
+  usuarioId     Int          @unique
+  especialidad  Especialidad @relation(fields: [especialidadId], references: [id], onDelete: Restrict)
+  especialidadId Int
+  horarios      HorarioMedico[]
+  citas         Cita[]       @relation("MedicoCitas")
+
+  @@map("medicos")
+}
+
+/// Franjas de disponibilidad semanal del médico
+/// RF-05 (disponibilidad horaria en tiempo real)
+model HorarioMedico {
+  id          Int       @id @default(autoincrement())
+  diaSemana   DiaSemana
+  horaInicio  String    @db.VarChar(5)  // HH:mm
+  horaFin     String    @db.VarChar(5)  // HH:mm
+  estado      Boolean   @default(true)
+
+  // Relaciones
+  medico      Medico    @relation(fields: [medicoId], references: [id], onDelete: Cascade)
+  medicoId    Int
+
+  @@map("horarios_medico")
+}
+
+/// Cita médica — entidad central del sistema
+/// RF-06 (agendar, reagendar, cancelar), RF-07 (recordatorios)
+model Cita {
+  id                Int        @id @default(autoincrement())
+  numeroCita        String     @unique @db.VarChar(20)
+  fecha             DateTime   @db.Date
+  hora              String     @db.VarChar(5)  // HH:mm
+  estado            EstadoCita @default(CONFIRMADA)
+  motivoCancelacion String?    @db.Text
+  reminderSent      Boolean    @default(false)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  // Relaciones
+  paciente          Usuario    @relation("PacienteCitas", fields: [pacienteId], references: [id], onDelete: Restrict)
+  pacienteId        Int
+  medico            Medico     @relation("MedicoCitas", fields: [medicoId], references: [id], onDelete: Restrict)
+  medicoId          Int
+
+  // Índices de rendimiento (SRS RNF-01)
+  @@index([pacienteId], name: "idx_citas_paciente_id")
+  @@index([medicoId],   name: "idx_citas_medico_id")
+  @@index([fecha],      name: "idx_citas_fecha")
+  @@index([estado],     name: "idx_citas_estado")
+
+  @@map("citas")
+}
