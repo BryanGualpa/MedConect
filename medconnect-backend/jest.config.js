@@ -7,11 +7,6 @@ module.exports = {
     '**/tests/**/*.spec.js'
   ],
 
-  // Redirige cualquier require de prismaClient al mock
-  moduleNameMapper: {
-    '.*prismaClient.*': '<rootDir>/src/__mocks__/prismaClient.js'
-  },
-
   collectCoverageFrom: [
     'src/controllers/**/*.js',
     'src/services/**/*.js',
