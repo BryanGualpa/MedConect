@@ -1,0 +1,42 @@
+# Dependencias
+node_modules/
+.npm
+
+# Variables de entorno — NUNCA subir al repositorio (SRS v1.0 sección 8.1)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build de producción
+build/
+dist/
+
+# Cobertura de pruebas
+coverage/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Prisma
+medconnect-backend/prisma/migrations/*.db
+
+# Docker
+.docker/
+
+# Temporal
+tmp/
+temp/

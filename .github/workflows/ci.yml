@@ -1,0 +1,66 @@
+# .github/workflows/ci.yml
+# MedConnect CI — Pruebas Unitarias
+# Ref: Laboratorio de Pruebas Unitarias — Sección 7.2
+
+name: MedConnect CI — Pruebas Unitarias
+
+on:
+  push:
+    branches: [ main, develop, testing, feature/auth, feature/citas, feature/agenda, feature/admin ]
+  pull_request:
+    branches: [ main, develop, testing ]
+
+jobs:
+  test:
+    name: Ejecutar pruebas unitarias y de integración
+    runs-on: ubuntu-22.04
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: medconnect_test_db
+          POSTGRES_USER: medconnect_user
+          POSTGRES_PASSWORD: test_password_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-retries 5
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 20.x LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: medconnect-backend/package-lock.json
+
+      - name: Instalar dependencias del backend
+        run: npm ci
+        working-directory: medconnect-backend
+
+      - name: Ejecutar migraciones en base de datos de prueba
+        run: npx prisma migrate deploy
+        working-directory: medconnect-backend
+        env:
+          DATABASE_URL: postgresql://medconnect_user:test_password_ci@localhost:5432/medconnect_test_db
+
+      - name: Ejecutar pruebas con cobertura
+        run: npm run test:ci
+        working-directory: medconnect-backend
+        env:
+          DATABASE_URL: postgresql://medconnect_user:test_password_ci@localhost:5432/medconnect_test_db
+          JWT_SECRET: ci-secret-medconnect-2026
+          NODE_ENV: test
+
+      - name: Publicar reporte de cobertura
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: medconnect-backend/coverage/lcov.info
+          fail_ci_if_error: false
