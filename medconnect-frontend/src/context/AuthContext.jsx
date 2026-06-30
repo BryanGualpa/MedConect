@@ -23,6 +23,7 @@ export function AuthProvider({ children }) {
   function login(data) {
     setToken(data.accessToken);
     setUsuario(data.usuario);
+    window.__medconnect_token__ = data.accessToken;
   }
 
   /**
@@ -32,6 +33,7 @@ export function AuthProvider({ children }) {
   function logout() {
     setToken(null);
     setUsuario(null);
+    window.__medconnect_token__ = null;
   }
 
   const estaAutenticado = !!token;
