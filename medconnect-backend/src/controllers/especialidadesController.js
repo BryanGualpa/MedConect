@@ -1,6 +1,8 @@
 // src/controllers/especialidadesController.js
 // MedConnect — Controlador de Especialidades Médicas
+// SCRUM-31 | HU-03 | Subtarea: Verificar especialidadesController.js
 // Ref: Arquitectura de Software — Sección 5.1 | SRS RF-03
+// Autor: Cristian Bayas | Sprint 2 — EP-02 Especialidades y Médicos
 
 const prisma = require('../config/prismaClient');
 
