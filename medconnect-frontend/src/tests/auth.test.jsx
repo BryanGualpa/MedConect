@@ -20,16 +20,18 @@ jest.mock('react-router-dom', () => ({
 
 // Mock del contexto de autenticación
 const mockLogin = jest.fn();
+let mockAuthValue = {
+  login:           mockLogin,
+  logout:          jest.fn(),
+  estaAutenticado: false,
+  usuario:         null,
+  esPaciente:      false,
+  esMedico:        false,
+  esAdmin:         false
+};
+
 jest.mock('../context/AuthContext', () => ({
-  useAuth: () => ({
-    login:           mockLogin,
-    logout:          jest.fn(),
-    estaAutenticado: false,
-    usuario:         null,
-    esPaciente:      false,
-    esMedico:        false,
-    esAdmin:         false
-  }),
+  useAuth: () => mockAuthValue,
   AuthProvider: ({ children }) => <>{children}</>
 }));
 
@@ -54,6 +56,18 @@ function renderConRouter(componente, ruta = '/') {
     </MemoryRouter>
   );
 }
+
+beforeEach(() => {
+  mockAuthValue = {
+    login:           mockLogin,
+    logout:          jest.fn(),
+    estaAutenticado: false,
+    usuario:         null,
+    esPaciente:      false,
+    esMedico:        false,
+    esAdmin:         false
+  };
+});
 
 // ────────────────────────────────────────────────────────────────────────────
 // TC-F01 — Formulario de registro: renderizado correcto
@@ -214,12 +228,52 @@ describe('TC-F02 — Login.jsx: validación de correo inválido (RF-02, RNF-08)'
 // ────────────────────────────────────────────────────────────────────────────
 describe('TC-F03 — NavBar.jsx: enlaces según rol', () => {
   test('Sin sesión muestra "Iniciar sesión" y "Registrarse"', () => {
-    // El mock de AuthContext ya devuelve estaAutenticado: false
     const NavBar = require('../components/NavBar').default;
     renderConRouter(<NavBar />);
 
     expect(screen.getByText(/iniciar sesión/i)).toBeInTheDocument();
     expect(screen.getByText(/registrarse/i)).toBeInTheDocument();
     expect(screen.queryByTestId('btn-logout')).not.toBeInTheDocument();
+  });
+
+  test('Paciente logueado muestra "Mis Citas" y no "Iniciar sesión"', () => {
+    mockAuthValue.estaAutenticado = true;
+    mockAuthValue.usuario = { nombre: 'María López', rol: 'PACIENTE' };
+    mockAuthValue.esPaciente = true;
+
+    const NavBar = require('../components/NavBar').default;
+    renderConRouter(<NavBar />);
+
+    expect(screen.getByText(/mis citas/i)).toBeInTheDocument();
+    expect(screen.queryByText(/iniciar sesión/i)).not.toBeInTheDocument();
+    expect(screen.getByTestId('btn-logout')).toBeInTheDocument();
+  });
+
+  test('Médico logueado muestra "Mi Agenda" y no "Mis Citas"', () => {
+    mockAuthValue.estaAutenticado = true;
+    mockAuthValue.usuario = { nombre: 'Carlos Mendoza', rol: 'MEDICO' };
+    mockAuthValue.esMedico = true;
+
+    const NavBar = require('../components/NavBar').default;
+    renderConRouter(<NavBar />);
+
+    expect(screen.getByText(/mi agenda/i)).toBeInTheDocument();
+    expect(screen.queryByText(/mis citas/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/iniciar sesión/i)).not.toBeInTheDocument();
+    expect(screen.getByTestId('btn-logout')).toBeInTheDocument();
+  });
+
+  test('Administrador logueado muestra "Panel Administrativo" y no "Mi Agenda"', () => {
+    mockAuthValue.estaAutenticado = true;
+    mockAuthValue.usuario = { nombre: 'Administrador', rol: 'ADMIN' };
+    mockAuthValue.esAdmin = true;
+
+    const NavBar = require('../components/NavBar').default;
+    renderConRouter(<NavBar />);
+
+    expect(screen.getByText(/panel administrativo/i)).toBeInTheDocument();
+    expect(screen.queryByText(/mi agenda/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/iniciar sesión/i)).not.toBeInTheDocument();
+    expect(screen.getByTestId('btn-logout')).toBeInTheDocument();
   });
 });

@@ -1,13 +1,36 @@
-// src/services/authService.js
-// MedConnect — Servicio de Autenticación (JWT + bcrypt)
-// Ref: Arquitectura de Software — Sección 5.2 | SRS RF-01, RF-02, RNF-08
+/**
+ * @fileoverview Servicio de Autenticación de MedConnect.
+ * Proporciona utilidades para la generación, firma, verificación de tokens JWT
+ * y el hashing/comparación de contraseñas mediante bcrypt.
+ * 
+ * Ref: Arquitectura de Software — Sección 5.2 | SRS RF-01, RF-02, RNF-08
+ */
 
 const jwt     = require('jsonwebtoken');
 const bcrypt  = require('bcryptjs');
 
+/**
+ * Clave secreta para la firma y verificación de tokens JWT.
+ * @type {string}
+ */
 const JWT_SECRET          = process.env.JWT_SECRET || 'test-secret-medconnect-2026';
+
+/**
+ * Tiempo de expiración para el token de acceso (24 horas según SRS RNF-08).
+ * @type {string}
+ */
 const JWT_EXPIRES_IN      = process.env.JWT_EXPIRES_IN || '24h';
+
+/**
+ * Tiempo de expiración para el token de refresco (30 días según SRS RNF-08).
+ * @type {string}
+ */
 const JWT_REFRESH_EXPIRES = process.env.JWT_REFRESH_EXPIRES_IN || '30d';
+
+/**
+ * Número de rondas de hashing (salt rounds) para bcrypt.
+ * @type {number}
+ */
 const SALT_ROUNDS         = 10;
 
 /**

@@ -61,6 +61,17 @@ async function registerPaciente(req, res) {
       });
     }
 
+    // Verificar si la cédula ya existe (HU-01 criterio de aceptación)
+    const cedulaExistente = await prisma.usuario.findUnique({
+      where: { cedula }
+    });
+
+    if (cedulaExistente) {
+      return res.status(409).json({
+        mensaje: 'Esta cédula ya está registrada.'
+      });
+    }
+
     // Hash de la contraseña (bcrypt 10 salt rounds — SRS RNF-03)
     const passwordHash = await hashPassword(contrasena);
 
