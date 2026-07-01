@@ -78,7 +78,7 @@ describe('AuthController — Registro de paciente (RF-01)', () => {
     expect(body.usuario.rol).toBe('PACIENTE');
   });
 
-  // TC-B02: Correo ya registrado → 409 Conflict
+  // TC-B-02: Correo ya registrado → 409 Conflict
   test('TC-B-02: Correo duplicado devuelve 409 Conflict', async () => {
     const mockReq = {
       body: { nombre: 'Test', cedula: '1234567890', correo: 'existente@ejemplo.com', contrasena: 'Segura#2026', telefono: '099' }
@@ -98,6 +98,29 @@ describe('AuthController — Registro de paciente (RF-01)', () => {
     expect(prisma.usuario.create).not.toHaveBeenCalled();
     const body = mockRes.json.mock.calls[0][0];
     expect(body.mensaje).toContain('registrado');
+  });
+
+  // TC-B-02b: Cédula ya registrada → 409 Conflict
+  test('TC-B-02b: Cédula duplicada devuelve 409 Conflict', async () => {
+    const mockReq = {
+      body: { nombre: 'Test', cedula: '0503456789', correo: 'libre@ejemplo.com', contrasena: 'Segura#2026', telefono: '099' }
+    };
+    const mockRes = crearMockRes();
+
+    // Arrange: el correo no existe en la BD, la cédula sí
+    prisma.usuario.findUnique.mockResolvedValueOnce(null);
+    prisma.usuario.findUnique.mockResolvedValueOnce({
+      id: 5, cedula: '0503456789'
+    });
+
+    // Act
+    await registerPaciente(mockReq, mockRes);
+
+    // Assert
+    expect(mockRes.status).toHaveBeenCalledWith(409);
+    expect(prisma.usuario.create).not.toHaveBeenCalled();
+    const body = mockRes.json.mock.calls[0][0];
+    expect(body.mensaje).toContain('Esta cédula ya está registrada.');
   });
 
   // TC-B03: Validación falla (express-validator) → 400 Bad Request
