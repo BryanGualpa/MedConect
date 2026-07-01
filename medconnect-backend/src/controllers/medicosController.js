@@ -1,6 +1,8 @@
 // src/controllers/medicosController.js
 // MedConnect — Controlador de Médicos
+// SCRUM-32 | HU-03 | Subtarea: Verificar medicosController.js (perfil y disponibilidad)
 // Ref: Arquitectura de Software — Sección 5.1 | SRS RF-04, RF-05, RF-08
+// Autor: Cristian Bayas | Sprint 2 — EP-02 Especialidades y Médicos
 
 const prisma = require('../config/prismaClient');
 const { getHorariosLibres } = require('../services/disponibilidadService');
