@@ -1,6 +1,8 @@
 // src/services/disponibilidadService.js
 // MedConnect — Servicio de Disponibilidad Horaria en Tiempo Real
+// SCRUM-33 | HU-03 | Subtarea: Verificar disponibilidadService.js (slots en tiempo real)
 // Ref: Arquitectura de Software — Sección 5.2 | SRS RF-05
+// Autor: Cristian Bayas | Sprint 2 — EP-02 Especialidades y Médicos
 
 const prisma = require('../config/prismaClient');
 const dayjs  = require('dayjs');
