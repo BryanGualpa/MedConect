@@ -30,11 +30,21 @@ const BLOQUEO_MS    = 15 * 60 * 1000; // 15 minutos
  *             type: object
  *             required: [nombre, cedula, correo, contrasena, telefono]
  *             properties:
- *               nombre:    { type: string, example: "María López" }
- *               cedula:    { type: string, example: "0503456789" }
- *               correo:    { type: string, example: "maria@ejemplo.com" }
- *               contrasena: { type: string, example: "Segura#2026" }
- *               telefono:  { type: string, example: "0991234567" }
+ *               nombre:
+ *                 type: string
+ *                 example: "María López"
+ *               cedula:
+ *                 type: string
+ *                 example: "0503456789"
+ *               correo:
+ *                 type: string
+ *                 example: "maria@ejemplo.com"
+ *               contrasena:
+ *                 type: string
+ *                 example: "Segura#2026"
+ *               telefono:
+ *                 type: string
+ *                 example: "0991234567"
  *     responses:
  *       201: { description: Paciente registrado exitosamente }
  *       400: { description: Datos inválidos }
@@ -116,8 +126,10 @@ async function registerPaciente(req, res) {
  *             type: object
  *             required: [correo, contrasena]
  *             properties:
- *               correo:     { type: string }
- *               contrasena: { type: string }
+ *               correo:
+ *                 type: string
+ *               contrasena:
+ *                 type: string
  *     responses:
  *       200: { description: Login exitoso — retorna token JWT }
  *       401: { description: Credenciales inválidas }

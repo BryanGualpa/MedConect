@@ -3,9 +3,12 @@
 const express       = require('express');
 const authMiddleware = require('../middleware/authMiddleware');
 const roleMiddleware = require('../middleware/roleMiddleware');
-const { getById, getDisponibilidad, getAgendaSemanal } = require('../controllers/medicosController');
+const { getMe, getById, getDisponibilidad, getAgendaSemanal } = require('../controllers/medicosController');
 
 const router = express.Router();
+
+// GET /api/medicos/me — Perfil del médico autenticado (RF-08)
+router.get('/me', authMiddleware, roleMiddleware(['MEDICO']), getMe);
 
 // GET /api/medicos/:id — RF-04 (requiere autenticación)
 router.get('/:id', authMiddleware, getById);

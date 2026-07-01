@@ -5,14 +5,9 @@
 const { verifyToken } = require('../services/authService');
 
 /**
- * Middleware para la autenticación de usuarios mediante tokens JWT.
- * Intercepta las rutas protegidas, valida el token provisto en la cabecera 'Authorization'
- * y asigna el payload decodificado a `req.user`.
- * 
- * @param {import('express').Request} req - Objeto de solicitud de Express.
- * @param {import('express').Response} res - Objeto de respuesta de Express.
- * @param {import('express').NextFunction} next - Función callback para continuar al siguiente middleware o ruta.
- * @returns {void|import('express').Response} Retorna respuesta con código 401 si falla, de lo contrario invoca a next().
+ * Intercepta todas las rutas protegidas.
+ * Extrae el token JWT del encabezado Authorization: Bearer <token>
+ * Rechaza con HTTP 401 si el token es inválido o expirado.
  */
 function authMiddleware(req, res, next) {
   const authHeader = req.headers['authorization'];

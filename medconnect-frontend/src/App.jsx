@@ -1,24 +1,20 @@
 // src/App.jsx
-// MedConnect — Enrutamiento principal
+// MedConnect — Enrutamiento principal (Sprint 1)
 // Ref: Arquitectura de Software — Sección 2.2.1 | SRS RF-01, RF-02, RNF-08
 // Gestiona rutas públicas y protegidas con redirección por rol
 
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import NavBar from './components/NavBar';
 import Login    from './pages/Login';
 import Register from './pages/Register';
-import Especialidades from './pages/Especialidades';
-import MisCitas       from './pages/MisCitas';
-import Agenda         from './pages/AgendaMedico';
-import AdminPanel     from './pages/AdminPanel';
-import MedicoDetalle  from './pages/MedicoDetalle';
-import AgendarCita    from './pages/AgendarCita';
 
-// Crear cliente de TanStack Query para el manejo de estado asíncrono
-const queryClient = new QueryClient();
+// ── Placeholders para páginas de Sprints posteriores (Sprint 2 y 3) ─────────
+function Especialidades()    { return <div className="container mt-4"><h2>Especialidades</h2></div>; }
+function MisCitas()          { return <div className="container mt-4"><h2>Mis Citas</h2></div>; }
+function Agenda()            { return <div className="container mt-4"><h2>Mi Agenda</h2></div>; }
+function AdminPanel()        { return <div className="container mt-4"><h2>Panel Administrativo</h2></div>; }
 
 // ── Ruta protegida: redirige a /login si no está autenticado ─────────────────
 function RutaProtegida({ children, rolesPermitidos }) {
@@ -90,22 +86,6 @@ function AppRoutes() {
             </RutaProtegida>
           }
         />
-        <Route
-          path="/medicos/:id"
-          element={
-            <RutaProtegida rolesPermitidos={['PACIENTE']}>
-              <MedicoDetalle />
-            </RutaProtegida>
-          }
-        />
-        <Route
-          path="/medicos/:id/agendar"
-          element={
-            <RutaProtegida rolesPermitidos={['PACIENTE']}>
-              <AgendarCita />
-            </RutaProtegida>
-          }
-        />
 
         {/* Rutas PROTEGIDAS — MEDICO */}
         <Route
@@ -144,12 +124,10 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AuthProvider>
-          <AppRoutes />
-        </AuthProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
   );
 }

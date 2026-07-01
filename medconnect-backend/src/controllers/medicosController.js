@@ -6,6 +6,41 @@ const prisma = require('../config/prismaClient');
 const { getHorariosLibres } = require('../services/disponibilidadService');
 
 /**
+ * GET /api/medicos/me — Perfil del médico autenticado
+ */
+async function getMe(req, res) {
+  if (req.user.rol !== 'MEDICO') {
+    return res.status(403).json({ mensaje: 'Acceso restringido a médicos.' });
+  }
+
+  try {
+    const medico = await prisma.medico.findUnique({
+      where: { usuarioId: req.user.id },
+      include: {
+        usuario:      { select: { nombre: true } },
+        especialidad: { select: { nombre: true } }
+      }
+    });
+
+    if (!medico || !medico.estado) {
+      return res.status(404).json({ mensaje: 'Perfil médico no encontrado.' });
+    }
+
+    return res.status(200).json({
+      medico: {
+        id:           medico.id,
+        nombre:       medico.usuario.nombre,
+        titulo:       medico.titulo,
+        especialidad: medico.especialidad
+      }
+    });
+  } catch (err) {
+    console.error('Error en getMe medico:', err);
+    return res.status(500).json({ mensaje: 'Error interno del servidor.' });
+  }
+}
+
+/**
  * GET /api/medicos/:id — Perfil del médico con especialidad y disponibilidad
  * RF-04: Incluye nombre, título, especialidad y horarios disponibles
  */
@@ -97,4 +132,4 @@ async function getAgendaSemanal(req, res) {
   }
 }
 
-module.exports = { getById, getDisponibilidad, getAgendaSemanal };
+module.exports = { getMe, getById, getDisponibilidad, getAgendaSemanal };

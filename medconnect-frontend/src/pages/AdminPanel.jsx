@@ -1,35 +1,37 @@
 // src/pages/AdminPanel.jsx
-// MedConnect — Panel de Control Administrativo
-// Ref: Arquitectura de Software — Sección 6.6 | SRS RF-09
+// MedConnect — Panel administrativo de médicos
+// Ref: SRS RF-09
 
 import React, { useState, useEffect } from 'react';
 import { adminAPI, especialidadesAPI } from '../services/api';
+import PageHeader from '../components/PageHeader';
+import LoadingSpinner from '../components/LoadingSpinner';
+
+const DIAS_SEMANA = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'];
+
+const formInicial = {
+  nombre: '',
+  cedula: '',
+  correo: '',
+  contrasena: '',
+  telefono: '',
+  titulo: '',
+  descripcion: '',
+  especialidadId: ''
+};
 
 export default function AdminPanel() {
   const [medicos, setMedicos] = useState([]);
   const [especialidades, setEspecialidades] = useState([]);
+  const [form, setForm] = useState(formInicial);
   const [loading, setLoading] = useState(true);
-  const [mensaje, setMensaje] = useState('');
+  const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState('');
-
-  // Estados para Registro de Médico
-  const [showRegistro, setShowRegistro] = useState(false);
-  const [nombre, setNombre] = useState('');
-  const [cedula, setCedula] = useState('');
-  const [correo, setCorreo] = useState('');
-  const [contrasena, setContrasena] = useState('');
-  const [telefono, setTelefono] = useState('');
-  const [titulo, setTitulo] = useState('');
-  const [descripcion, setDescripcion] = useState('');
-  const [especialidadId, setEspecialidadId] = useState('');
-  const [guardandoMedico, setGuardandoMedico] = useState(false);
-
-  // Estados para Configuración de Horarios
-  const [configurandoMedico, setConfigurandoMedico] = useState(null);
+  const [mensaje, setMensaje] = useState('');
+  const [medicoHorarios, setMedicoHorarios] = useState(null);
   const [horarios, setHorarios] = useState([
     { diaSemana: 'LUNES', horaInicio: '08:00', horaFin: '12:00' }
   ]);
-  const [guardandoHorario, setGuardandoHorario] = useState(false);
 
   useEffect(() => {
     cargarDatos();
@@ -39,366 +41,277 @@ export default function AdminPanel() {
     setLoading(true);
     setError('');
     try {
-      const [medRes, espRes] = await Promise.all([
+      const [resMedicos, resEsp] = await Promise.all([
         adminAPI.getMedicos(),
-        especialidadesAPI.getAll()
+        especialidadesAPI.getAll('')
       ]);
-      setMedicos(medRes.data.medicos || []);
-      setEspecialidades(espRes.data.especialidades || []);
+      setMedicos(resMedicos.data.medicos || []);
+      setEspecialidades(resEsp.data.especialidades || []);
     } catch (err) {
-      console.error('Error cargando datos administrativos:', err);
-      setError('No se pudieron cargar los datos del panel.');
+      console.error('Error cargando panel admin:', err);
+      setError('No se pudo cargar el panel administrativo.');
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleRegistrarMedico(e) {
+  function handleChange(e) {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  }
+
+  async function handleCrearMedico(e) {
     e.preventDefault();
-    setGuardandoMedico(true);
+    setEnviando(true);
     setError('');
     setMensaje('');
     try {
       await adminAPI.createMedico({
-        nombre,
-        cedula,
-        correo,
-        contrasena,
-        telefono,
-        titulo,
-        descripcion,
-        especialidadId: parseInt(especialidadId)
+        ...form,
+        especialidadId: parseInt(form.especialidadId, 10)
       });
-      setMensaje('Médico registrado con éxito.');
-      setShowRegistro(false);
-      limpiarRegistroForm();
+      setMensaje('Médico registrado exitosamente.');
+      setForm(formInicial);
       cargarDatos();
     } catch (err) {
-      console.error('Error creando médico:', err);
       setError(err.response?.data?.mensaje || 'Error al registrar el médico.');
     } finally {
-      setGuardandoMedico(false);
+      setEnviando(false);
     }
   }
 
-  async function handleDesactivarMedico(id) {
-    if (!window.confirm('¿Estás seguro de que deseas desactivar a este médico?')) return;
-    setError('');
-    setMensaje('');
+  async function handleDesactivar(id) {
+    if (!window.confirm('¿Desactivar este médico?')) return;
     try {
       await adminAPI.deactivate(id);
       setMensaje('Médico desactivado.');
       cargarDatos();
     } catch (err) {
-      console.error('Error desactivando médico:', err);
-      setError('No se pudo desactivar al médico.');
+      setError(err.response?.data?.mensaje || 'Error al desactivar el médico.');
     }
   }
 
-  function abrirConfigHorario(medico) {
-    setConfigurandoMedico(medico);
-    // Cargar horarios actuales si existen
-    if (medico.horarios && medico.horarios.length > 0) {
-      setHorarios(medico.horarios.map(h => ({
-        diaSemana: h.diaSemana,
-        horaInicio: h.horaInicio,
-        horaFin: h.horaFin
-      })));
-    } else {
-      setHorarios([{ diaSemana: 'LUNES', horaInicio: '08:00', horaFin: '12:00' }]);
-    }
-  }
-
-  function handleAgregarFilaHorario() {
+  function agregarHorario() {
     setHorarios([...horarios, { diaSemana: 'LUNES', horaInicio: '08:00', horaFin: '12:00' }]);
   }
 
-  function handleFilaHorarioChange(index, campo, valor) {
+  function actualizarHorario(index, campo, valor) {
     const nuevos = [...horarios];
-    nuevos[index][campo] = valor;
+    nuevos[index] = { ...nuevos[index], [campo]: valor };
     setHorarios(nuevos);
   }
 
-  function handleEliminarFilaHorario(index) {
-    const nuevos = [...horarios];
-    nuevos.splice(index, 1);
-    setHorarios(nuevos);
-  }
-
-  async function handleGuardarHorarios(e) {
+  async function guardarHorarios(e) {
     e.preventDefault();
-    setGuardandoHorario(true);
-    setError('');
-    setMensaje('');
     try {
-      await adminAPI.setHorario(configurandoMedico.id, { horarios });
-      setMensaje(`Horarios del Dr. ${configurandoMedico.usuario?.nombre} actualizados.`);
-      setConfigurandoMedico(null);
-      cargarDatos();
+      await adminAPI.setHorario(medicoHorarios.id, { horarios });
+      setMensaje('Horarios actualizados.');
+      setMedicoHorarios(null);
     } catch (err) {
-      console.error('Error guardando horarios:', err);
-      setError('Error al actualizar los horarios.');
-    } finally {
-      setGuardandoHorario(false);
+      setError(err.response?.data?.mensaje || 'Error al guardar horarios.');
     }
   }
 
-  function limpiarRegistroForm() {
-    setNombre('');
-    setCedula('');
-    setCorreo('');
-    setContrasena('');
-    setTelefono('');
-    setTitulo('');
-    setDescripcion('');
-    setEspecialidadId('');
-  }
-
-  const diasOpciones = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES', 'SABADO'];
-
-  if (loading) {
-    return (
-      <div className="text-center py-5">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Cargando panel administrativo...</span>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="container py-5 animate__animated animate__fadeIn">
-      <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-4 gap-3">
-        <div>
-          <h1 className="fw-bold mb-1">Panel Administrativo</h1>
-          <p className="text-muted small mb-0">Gestión de profesionales médicos y sus horarios de atención</p>
-        </div>
-        <button className="btn btn-primary rounded-pill px-4" onClick={() => setShowRegistro(true)}>
-          + Registrar Médico
-        </button>
+    <div className="container mc-page">
+      <PageHeader
+        align="left"
+        eyebrow="Administración"
+        title="Panel Administrativo"
+        subtitle="Gestión de médicos y horarios del sistema."
+      />
+
+      <div className="mc-hint">
+        <span className="mc-hint-icon">⚙️</span>
+        <span>Registra médicos en el formulario izquierdo. Asigna horarios y gestiona el estado desde la tabla.</span>
       </div>
 
-      {/* Alertas */}
-      {mensaje && <div className="alert alert-success alert-dismissible fade show" role="alert">{mensaje}</div>}
-      {error && <div className="alert alert-danger alert-dismissible fade show" role="alert">{error}</div>}
+      {mensaje && <div className="mc-alert mc-alert-success">{mensaje}</div>}
+      {error && <div className="mc-alert mc-alert-danger">{error}</div>}
 
-      {/* Listado de Médicos */}
-      <div className="card shadow-sm border-0 rounded-4 overflow-hidden">
-        <div className="table-responsive">
-          <table className="table table-hover align-middle mb-0 small">
-            <thead className="table-light text-muted">
-              <tr>
-                <th>Médico</th>
-                <th>Cédula</th>
-                <th>Especialidad</th>
-                <th>Contacto</th>
-                <th>Estado</th>
-                <th className="text-end">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {medicos.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="text-center py-5 text-muted">
-                    No hay médicos registrados actualmente.
-                  </td>
-                </tr>
-              ) : (
-                medicos.map((medico) => (
-                  <tr key={medico.id}>
-                    <td>
-                      <div>
-                        <span className="fw-bold text-dark">{medico.usuario?.nombre}</span>
-                        <div className="text-muted small">{medico.titulo}</div>
-                      </div>
-                    </td>
-                    <td>{medico.usuario?.cedula}</td>
-                    <td>{medico.especialidad?.nombre}</td>
-                    <td>
-                      <div>
-                        <div>{medico.usuario?.correo}</div>
-                        <div className="text-muted small">{medico.usuario?.telefono}</div>
-                      </div>
-                    </td>
-                    <td>
-                      <span className={`badge ${medico.estado ? 'bg-success' : 'bg-danger'}`}>
-                        {medico.estado ? 'Activo' : 'Inactivo'}
-                      </span>
-                    </td>
-                    <td className="text-end">
-                      <div className="d-flex justify-content-end gap-2">
-                        <button
-                          className="btn btn-outline-primary btn-sm rounded-pill px-3"
-                          onClick={() => abrirConfigHorario(medico)}
-                        >
-                          Horarios
-                        </button>
-                        {medico.estado && (
-                          <button
-                            className="btn btn-outline-danger btn-sm rounded-pill px-3"
-                            onClick={() => handleDesactivarMedico(medico.id)}
-                          >
-                            Desactivar
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Modal Registrar Médico */}
-      {showRegistro && (
-        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
-          <div className="modal-dialog modal-dialog-centered modal-lg">
-            <div className="modal-content rounded-4 border-0 shadow-lg">
-              <form onSubmit={handleRegistrarMedico}>
-                <div className="modal-header border-0 pb-0">
-                  <h5 className="modal-title fw-bold">Registrar Nuevo Médico</h5>
-                  <button type="button" className="btn-close" onClick={() => setShowRegistro(false)} />
-                </div>
-                <div className="modal-body p-4">
-                  <div className="row g-3">
-                    <div className="col-md-6">
-                      <label className="form-label small fw-semibold text-muted">Nombre completo</label>
-                      <input type="text" className="form-control" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
-                    </div>
-                    <div className="col-md-6">
-                      <label className="form-label small fw-semibold text-muted">Cédula (10 dígitos)</label>
-                      <input type="text" className="form-control" maxLength="10" value={cedula} onChange={(e) => setCedula(e.target.value)} required />
-                    </div>
-                    <div className="col-md-6">
-                      <label className="form-label small fw-semibold text-muted">Correo electrónico</label>
-                      <input type="email" className="form-control" value={correo} onChange={(e) => setCorreo(e.target.value)} required />
-                    </div>
-                    <div className="col-md-6">
-                      <label className="form-label small fw-semibold text-muted">Contraseña temporal (mín. 8 chars)</label>
-                      <input type="password" className="form-control" value={contrasena} onChange={(e) => setContrasena(e.target.value)} required />
-                    </div>
-                    <div className="col-md-6">
-                      <label className="form-label small fw-semibold text-muted">Teléfono de contacto</label>
-                      <input type="text" className="form-control" value={telefono} onChange={(e) => setTelefono(e.target.value)} required />
-                    </div>
-                    <div className="col-md-6">
-                      <label className="form-label small fw-semibold text-muted">Especialidad</label>
-                      <select className="form-select" value={especialidadId} onChange={(e) => setEspecialidadId(e.target.value)} required>
-                        <option value="">Selecciona...</option>
-                        {especialidades.map(esp => (
-                          <option key={esp.id} value={esp.id}>{esp.nombre}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="col-12">
-                      <label className="form-label small fw-semibold text-muted">Título profesional (ej. Pediatra — UCE)</label>
-                      <input type="text" className="form-control" value={titulo} onChange={(e) => setTitulo(e.target.value)} required />
-                    </div>
-                    <div className="col-12">
-                      <label className="form-label small fw-semibold text-muted">Descripción / Perfil</label>
-                      <textarea className="form-control" rows="3" value={descripcion} onChange={(e) => setDescripcion(e.target.value)} required />
-                    </div>
+      <div className="row g-4">
+        <div className="col-12 col-lg-5">
+          <div className="mc-card mc-card-celeste h-100">
+            <div className="mc-card-body">
+              <h2 className="h5 fw-bold mb-3">Registrar médico</h2>
+              <form onSubmit={handleCrearMedico}>
+                {[
+                  ['nombre', 'Nombre completo', 'text'],
+                  ['cedula', 'Cédula (10 dígitos)', 'text'],
+                  ['correo', 'Correo electrónico', 'email'],
+                  ['contrasena', 'Contraseña', 'password'],
+                  ['telefono', 'Teléfono', 'text'],
+                  ['titulo', 'Título profesional', 'text']
+                ].map(([name, label, type]) => (
+                  <div className="mb-2" key={name}>
+                    <label className="mc-form-label">{label}</label>
+                    <input
+                      type={type}
+                      name={name}
+                      className="form-control mc-input w-100"
+                      value={form[name]}
+                      onChange={handleChange}
+                      required={name !== 'descripcion'}
+                    />
                   </div>
+                ))}
+                <div className="mb-2">
+                  <label className="mc-form-label">Descripción</label>
+                  <textarea
+                    name="descripcion"
+                    className="form-control mc-input w-100"
+                    rows={2}
+                    value={form.descripcion}
+                    onChange={handleChange}
+                  />
                 </div>
-                <div className="modal-footer border-0">
-                  <button type="button" className="btn btn-light rounded-pill px-4" onClick={() => setShowRegistro(false)}>
-                    Cancelar
-                  </button>
-                  <button type="submit" className="btn btn-primary rounded-pill px-4" disabled={guardandoMedico}>
-                    {guardandoMedico ? 'Guardando...' : 'Registrar'}
-                  </button>
+                <div className="mb-3">
+                  <label className="mc-form-label">Especialidad</label>
+                  <select
+                    name="especialidadId"
+                    className="form-select mc-input w-100"
+                    value={form.especialidadId}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Seleccionar...</option>
+                    {especialidades.map((esp) => (
+                      <option key={esp.id} value={esp.id}>{esp.nombre}</option>
+                    ))}
+                  </select>
                 </div>
+                <button type="submit" className="mc-btn mc-btn-primary mc-btn-block" disabled={enviando}>
+                  {enviando ? 'Registrando...' : 'Registrar médico'}
+                </button>
               </form>
             </div>
           </div>
         </div>
-      )}
 
-      {/* Modal Asignar Horarios */}
-      {configurandoMedico && (
-        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
-          <div className="modal-dialog modal-dialog-centered modal-lg">
-            <div className="modal-content rounded-4 border-0 shadow-lg">
-              <form onSubmit={handleGuardarHorarios}>
-                <div className="modal-header border-0 pb-0">
-                  <h5 className="modal-title fw-bold">
-                    Horarios de Atención — Dr. {configurandoMedico.usuario?.nombre}
-                  </h5>
-                  <button type="button" className="btn-close" onClick={() => setConfigurandoMedico(null)} />
+        <div className="col-12 col-lg-7">
+          <div className="mc-card mc-card-surface h-100">
+            <div className="mc-card-body">
+              <h2 className="h5 fw-bold mb-3">Médicos registrados</h2>
+              {loading ? (
+                <LoadingSpinner label="Cargando médicos..." />
+              ) : medicos.length === 0 ? (
+                <div className="mc-empty">
+                  <div className="mc-empty-icon">👨‍⚕️</div>
+                  <p className="mc-text-muted mb-0">No hay médicos registrados.</p>
                 </div>
-                <div className="modal-body p-4">
-                  <p className="text-muted small mb-4">
-                    Asigna las franjas de disponibilidad semanal en las que atiende el médico.
-                  </p>
-
-                  <div className="d-flex flex-column gap-2 mb-3">
-                    {horarios.map((h, index) => (
-                      <div key={index} className="row g-2 align-items-center">
-                        <div className="col-md-4">
-                          <select
-                            className="form-select small"
-                            value={h.diaSemana}
-                            onChange={(e) => handleFilaHorarioChange(index, 'diaSemana', e.target.value)}
-                            required
-                          >
-                            {diasOpciones.map(d => (
-                              <option key={d} value={d}>{d}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="col-md-3">
-                          <input
-                            type="time"
-                            className="form-control small"
-                            value={h.horaInicio}
-                            step={1800}
-                            onChange={(e) => handleFilaHorarioChange(index, 'horaInicio', e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div className="col-md-3">
-                          <input
-                            type="time"
-                            className="form-control small"
-                            value={h.horaFin}
-                            step={1800}
-                            onChange={(e) => handleFilaHorarioChange(index, 'horaFin', e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div className="col-md-2">
-                          <button
-                            type="button"
-                            className="btn btn-outline-danger w-100 rounded-pill btn-sm"
-                            onClick={() => handleEliminarFilaHorario(index)}
-                          >
-                            Eliminar
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <button
-                    type="button"
-                    className="btn btn-outline-primary btn-sm rounded-pill"
-                    onClick={handleAgregarFilaHorario}
-                  >
-                    + Agregar franja horaria
-                  </button>
+              ) : (
+                <div className="mc-table-wrap">
+                  <table className="mc-table">
+                    <thead>
+                      <tr>
+                        <th>Nombre</th>
+                        <th>Especialidad</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {medicos.map((m) => (
+                        <tr key={m.id}>
+                          <td>{m.usuario?.nombre}</td>
+                          <td>{m.especialidad?.nombre}</td>
+                          <td>
+                            <span className={`mc-badge ${m.estado ? 'mc-badge-success' : 'mc-badge-neutral'}`}>
+                              {m.estado ? 'Activo' : 'Inactivo'}
+                            </span>
+                          </td>
+                          <td>
+                            <div className="d-flex gap-1 flex-wrap">
+                              <button
+                                type="button"
+                                className="mc-btn mc-btn-outline mc-btn-sm"
+                                onClick={() => setMedicoHorarios(m)}
+                              >
+                                Horarios
+                              </button>
+                              {m.estado && (
+                                <button
+                                  type="button"
+                                  className="mc-btn mc-btn-outline-danger mc-btn-sm"
+                                  onClick={() => handleDesactivar(m.id)}
+                                >
+                                  Desactivar
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-                <div className="modal-footer border-0">
-                  <button type="button" className="btn btn-light rounded-pill px-4" onClick={() => setConfigurandoMedico(null)}>
-                    Cancelar
-                  </button>
-                  <button type="submit" className="btn btn-primary rounded-pill px-4" disabled={guardandoHorario}>
-                    {guardandoHorario ? 'Guardando...' : 'Guardar Horarios'}
-                  </button>
-                </div>
-              </form>
+              )}
             </div>
+          </div>
+        </div>
+      </div>
+
+      {medicoHorarios && (
+        <div className="mc-modal-backdrop" role="dialog" aria-modal="true">
+          <div className="mc-modal mc-modal-lg">
+            <form onSubmit={guardarHorarios}>
+              <div className="mc-modal-header">
+                <h5 className="mc-modal-title">
+                  Horarios — {medicoHorarios.usuario?.nombre}
+                </h5>
+                <button type="button" className="mc-btn-close" onClick={() => setMedicoHorarios(null)}>
+                  ✕
+                </button>
+              </div>
+              <div className="mc-modal-body">
+                {horarios.map((h, i) => (
+                  <div className="row g-2 mb-2 align-items-end" key={i}>
+                    <div className="col-12 col-md-4">
+                      <label className="mc-form-label">Día</label>
+                      <select
+                        className="form-select mc-input w-100"
+                        value={h.diaSemana}
+                        onChange={(e) => actualizarHorario(i, 'diaSemana', e.target.value)}
+                      >
+                        {DIAS_SEMANA.map((d) => (
+                          <option key={d} value={d}>{d}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="col-6 col-md-3">
+                      <label className="mc-form-label">Inicio</label>
+                      <input
+                        type="time"
+                        className="form-control mc-input w-100"
+                        value={h.horaInicio}
+                        onChange={(e) => actualizarHorario(i, 'horaInicio', e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="col-6 col-md-3">
+                      <label className="mc-form-label">Fin</label>
+                      <input
+                        type="time"
+                        className="form-control mc-input w-100"
+                        value={h.horaFin}
+                        onChange={(e) => actualizarHorario(i, 'horaFin', e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+                ))}
+                <button type="button" className="mc-link border-0 bg-transparent p-0 small" onClick={agregarHorario}>
+                  + Agregar franja horaria
+                </button>
+              </div>
+              <div className="mc-modal-footer">
+                <button type="button" className="mc-btn mc-btn-ghost" onClick={() => setMedicoHorarios(null)}>
+                  Cerrar
+                </button>
+                <button type="submit" className="mc-btn mc-btn-primary">
+                  Guardar horarios
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

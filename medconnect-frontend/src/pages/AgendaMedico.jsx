@@ -1,194 +1,128 @@
 // src/pages/AgendaMedico.jsx
-// MedConnect — Agenda Semanal del Médico
-// Ref: Arquitectura de Software — Sección 6.5 | SRS RF-08
+// MedConnect — Agenda semanal del médico
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { especialidadesAPI, medicosAPI } from '../services/api';
 import dayjs from 'dayjs';
+import 'dayjs/locale/es';
+import { medicosAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
+import PageHeader from '../components/PageHeader';
+import LoadingSpinner from '../components/LoadingSpinner';
+
+dayjs.locale('es');
 
 export default function AgendaMedico() {
   const { usuario } = useAuth();
-  
   const [medicoId, setMedicoId] = useState(null);
-  const [loadingProfile, setLoadingProfile] = useState(true);
   const [citas, setCitas] = useState([]);
-  const [loadingCitas, setLoadingCitas] = useState(false);
-  const [semana, setSemana] = useState(dayjs().startOf('week').add(1, 'day').format('YYYY-MM-DD')); // Lunes de la semana actual
+  const [semanaInicio, setSemanaInicio] = useState(dayjs().startOf('week').add(1, 'day'));
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // 1. Resolver el medicoId correspondiente al usuario logueado
   useEffect(() => {
-    async function resolverMedicoId() {
-      setLoadingProfile(true);
-      setError('');
-      try {
-        // Obtener especialidades
-        const espRes = await especialidadesAPI.getAll();
-        const especialidades = espRes.data.especialidades || [];
-        
-        let encontradoId = null;
-        
-        // Buscar el médico en las especialidades
-        for (const esp of especialidades) {
-          const detailRes = await especialidadesAPI.getById(esp.id);
-          const medicos = detailRes.data.especialidad?.medicos || [];
-          const match = medicos.find(m => m.usuarioId === usuario?.id);
-          if (match) {
-            encontradoId = match.id;
-            break;
-          }
-        }
-        
-        if (encontradoId) {
-          setMedicoId(encontradoId);
-        } else {
-          setError('No se pudo encontrar tu perfil de médico registrado en el sistema.');
-        }
-      } catch (err) {
-        console.error('Error resolviendo perfil de médico:', err);
-        setError('Error al obtener el perfil del médico.');
-      } finally {
-        setLoadingProfile(false);
-      }
-    }
+    cargarPerfilMedico();
+  }, []);
 
-    if (usuario?.id) {
-      resolverMedicoId();
-    }
-  }, [usuario]);
-
-  // 2. Cargar las citas cuando cambie el medicoId o la semana
   useEffect(() => {
-    if (!medicoId) return;
+    if (medicoId) cargarAgenda();
+  }, [medicoId, semanaInicio]);
 
-    async function cargarAgenda() {
-      setLoadingCitas(true);
-      setError('');
-      try {
-        const res = await medicosAPI.getAgenda(medicoId, semana);
-        setCitas(res.data.citas || []);
-      } catch (err) {
-        console.error('Error cargando agenda semanal:', err);
-        setError('No se pudo cargar la agenda de citas.');
-      } finally {
-        setLoadingCitas(false);
-      }
+  async function cargarPerfilMedico() {
+    try {
+      const res = await medicosAPI.getMe();
+      setMedicoId(res.data.medico.id);
+    } catch (err) {
+      console.error('Error cargando perfil médico:', err);
+      setError('No se pudo cargar tu perfil médico.');
+      setLoading(false);
     }
-
-    cargarAgenda();
-  }, [medicoId, semana]);
-
-  // Navegación de semanas
-  function cambiarSemana(dias) {
-    setSemana(prev => dayjs(prev).add(dias, 'day').format('YYYY-MM-DD'));
   }
 
-  // Agrupar citas por día de la semana (Lunes a Viernes)
-  const diasSemana = ['LUNES', 'MARTES', 'MIERCOLES', 'JUEVES', 'VIERNES'];
-  
-  const agendaPorDia = {};
-  diasSemana.forEach(d => {
-    agendaPorDia[d] = [];
-  });
-
-  const diaSemanaMap = {
-    1: 'LUNES',
-    2: 'MARTES',
-    3: 'MIERCOLES',
-    4: 'JUEVES',
-    5: 'VIERNES'
-  };
-
-  citas.forEach(cita => {
-    const dayIndex = dayjs(cita.fecha).day(); // 0 = Domingo, 1 = Lunes, etc.
-    const diaNombre = diaSemanaMap[dayIndex];
-    if (agendaPorDia[diaNombre]) {
-      agendaPorDia[diaNombre].push(cita);
+  async function cargarAgenda() {
+    setLoading(true);
+    setError('');
+    try {
+      const semana = semanaInicio.format('YYYY-MM-DD');
+      const res = await medicosAPI.getAgenda(medicoId, semana);
+      setCitas(res.data.citas || []);
+    } catch (err) {
+      console.error('Error cargando agenda:', err);
+      setError('No se pudo cargar la agenda semanal.');
+    } finally {
+      setLoading(false);
     }
-  });
-
-  const styles = {
-    columna: {
-      flex: '1 1 0px',
-      minWidth: '200px',
-      backgroundColor: '#f7fafc',
-      borderRadius: '12px',
-      padding: '1rem',
-      border: '1px solid #e2e8f0'
-    },
-    citaCard: {
-      backgroundColor: '#ffffff',
-      borderRadius: '8px',
-      padding: '0.75rem',
-      borderLeft: '4px solid #3182ce',
-      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.04)'
-    }
-  };
-
-  if (loadingProfile) {
-    return (
-      <div className="text-center py-5">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Cargando perfil de médico...</span>
-        </div>
-      </div>
-    );
   }
+
+  const diasSemana = Array.from({ length: 7 }, (_, i) => semanaInicio.add(i, 'day'));
+
+  function citasDelDia(fecha) {
+    const fechaStr = fecha.format('YYYY-MM-DD');
+    return citas.filter((c) => dayjs(c.fecha).format('YYYY-MM-DD') === fechaStr);
+  }
+
+  const coloresDia = ['mc-card-celeste'];
 
   return (
-    <div className="container-fluid py-5 px-4 animate__animated animate__fadeIn">
-      <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between mb-4 gap-3">
-        <div>
-          <h1 className="fw-bold mb-1">Mi Agenda Semanal</h1>
-          <p className="text-muted small mb-0">Dr. {usuario?.nombre} — Citas confirmadas en la semana</p>
-        </div>
-        
-        {/* Controles de semana */}
-        <div className="d-flex align-items-center gap-2">
-          <button className="btn btn-outline-secondary btn-sm rounded-pill px-3" onClick={() => cambiarSemana(-7)}>
-            &larr; Anterior
-          </button>
-          <span className="fw-bold text-dark px-2 small">
-            Semana del {dayjs(semana).format('DD/MM/YYYY')} al {dayjs(semana).add(4, 'day').format('DD/MM/YYYY')}
-          </span>
-          <button className="btn btn-outline-secondary btn-sm rounded-pill px-3" onClick={() => cambiarSemana(7)}>
-            Siguiente &rarr;
-          </button>
-        </div>
+    <div className="container mc-page">
+      <PageHeader
+        align="left"
+        eyebrow="Panel médico"
+        title="Mi Agenda"
+        subtitle={`Citas confirmadas de ${usuario?.nombre || 'tu perfil'}`}
+      />
+
+      <div className="mc-hint">
+        <span className="mc-hint-icon">📅</span>
+        <span>Navega entre semanas con los botones. Cada tarjeta muestra las citas del día con hora y paciente.</span>
       </div>
 
-      {error && <div className="alert alert-danger">{error}</div>}
+      <div className="mc-week-nav mb-4">
+        <button
+          type="button"
+          className="mc-btn mc-btn-outline mc-btn-sm"
+          onClick={() => setSemanaInicio((p) => p.subtract(1, 'week'))}
+        >
+          ← Anterior
+        </button>
+        <span className="mc-week-label">
+          {semanaInicio.format('DD/MM')} — {semanaInicio.add(6, 'day').format('DD/MM/YYYY')}
+        </span>
+        <button
+          type="button"
+          className="mc-btn mc-btn-outline mc-btn-sm"
+          onClick={() => setSemanaInicio((p) => p.add(1, 'week'))}
+        >
+          Siguiente →
+        </button>
+      </div>
 
-      {loadingCitas ? (
-        <div className="text-center py-5">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Actualizando agenda...</span>
-          </div>
-        </div>
+      {error && <div className="mc-alert mc-alert-danger">{error}</div>}
+
+      {loading ? (
+        <LoadingSpinner label="Cargando agenda..." />
       ) : (
-        <div className="d-flex flex-row flex-wrap gap-3 overflow-auto">
-          {diasSemana.map((dia) => {
-            const citasDia = agendaPorDia[dia];
+        <div className="mc-grid-agenda">
+          {diasSemana.map((dia, index) => {
+            const citasDia = citasDelDia(dia);
             return (
-              <div key={dia} style={styles.columna} className="shadow-sm">
-                <h3 className="h6 fw-bold text-center border-bottom pb-2 text-primary">{dia}</h3>
-                
-                {citasDia.length === 0 ? (
-                  <p className="text-muted text-center small py-3 mb-0">Sin citas</p>
-                ) : (
-                  <div className="d-flex flex-column gap-2">
-                    {citasDia.map((cita) => (
-                      <div key={cita.id} style={styles.citaCard}>
-                        <div className="fw-bold text-dark small">{cita.hora}</div>
-                        <div className="text-muted small mb-1">{cita.paciente?.nombre}</div>
-                        <span className="badge bg-light text-primary border border-primary-subtle rounded-pill" style={{ fontSize: '0.7rem' }}>
-                          {cita.numeroCita}
-                        </span>
+              <div
+                key={dia.format('YYYY-MM-DD')}
+                className={`mc-card ${coloresDia[index % coloresDia.length]} h-100 overflow-hidden`}
+              >
+                <div className="mc-day-card-header">{dia.format('dddd DD/MM')}</div>
+                <div className="mc-card-body pt-3">
+                  {citasDia.length === 0 ? (
+                    <p className="mc-text-muted small mb-0">Sin citas</p>
+                  ) : (
+                    citasDia.map((cita) => (
+                      <div key={cita.id} className="mc-cita-chip">
+                        <div className="fw-bold">{cita.hora}</div>
+                        <div className="small">{cita.paciente?.nombre}</div>
+                        <span className="mc-badge mc-badge-success mt-1">{cita.estado}</span>
                       </div>
-                    ))}
-                  </div>
-                )}
+                    ))
+                  )}
+                </div>
               </div>
             );
           })}
