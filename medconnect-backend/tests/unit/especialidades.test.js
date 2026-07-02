@@ -1,6 +1,8 @@
 // tests/unit/especialidades.test.js
 // MedConnect — Pruebas Unitarias: Especialidades
-// Cubre: RF-03 (listado y búsqueda de especialidades)
+// SCRUM-34 | HU-03 | Subtarea: Completar tests/unit/especialidades.test.js
+// Cubre: RF-03 (listado y búsqueda de especialidades) — TC-B-07
+// Autor: Cristian Bayas | Sprint 2
 
 const { getAll } = require('../../src/controllers/especialidadesController');
 const prisma = require('../../src/config/prismaClient');
