@@ -1,6 +1,8 @@
 // src/controllers/citasController.js
 // MedConnect — Controlador de Citas Médicas
+// SCRUM-39/46 | HU-04/HU-06 | Agendar (RF-06), Reagendar/Cancelar (RF-06), Historial (RF-10)
 // Ref: Arquitectura de Software — Sección 5.1 | SRS RF-06, RF-07, RF-10
+// Autor: Cristian Bayas | Sprint 2-3 — EP-03 Agendamiento de Citas
 
 const { validationResult } = require('express-validator');
 const prisma = require('../config/prismaClient');
