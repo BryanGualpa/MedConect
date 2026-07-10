@@ -1,6 +1,8 @@
 // src/services/nodemailerService.js
 // MedConnect — Servicio de Correo Electrónico (Nodemailer)
+// SCRUM-43 | HU-05 | Subtarea: Verificar nodemailerService.js y envío SMTP
 // Ref: Arquitectura de Software — Sección 5.2 | SRS RF-07, RNF-08
+// Autor: Cristian Bayas | Sprint 2 — EP-03 Agendamiento de Citas
 // Protocolo: SMTP sobre TLS — puerto 587
 
 const nodemailer = require('nodemailer');
