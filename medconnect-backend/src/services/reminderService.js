@@ -1,7 +1,9 @@
 // src/services/reminderService.js
 // MedConnect — Servicio de Recordatorios Automáticos
+// SCRUM-44 | HU-05 | Subtarea: Configurar zona America/Guayaquil (UTC-5)
 // Ref: Arquitectura de Software — Sección 5.2 | SRS RF-07
 // Zona horaria: America/Guayaquil (UTC-5) — Ecuador
+// Autor: Cristian Bayas | Sprint 2 — EP-03 Agendamiento de Citas
 
 const dayjs  = require('dayjs');
 const utc    = require('dayjs/plugin/utc');
