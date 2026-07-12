@@ -1,7 +1,9 @@
 // tests/unit/nodemailer.test.js
 // MedConnect — Pruebas Unitarias: Servicio de Correo Electrónico
+// SCRUM-45 | HU-05 | Subtarea: Completar tests/unit/nodemailer.test.js
 // Ref: Laboratorio de Pruebas Unitarias — Sección 5.4.3
-// Cubre: RF-07 (recordatorio automático 24h antes)
+// Cubre: RF-07 (recordatorio automático 24h antes) — TC-B-14
+// Autor: Cristian Bayas | Sprint 2
 
 jest.mock('nodemailer');
 const nodemailer = require('nodemailer');
