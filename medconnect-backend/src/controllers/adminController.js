@@ -1,7 +1,10 @@
 // src/controllers/adminController.js
-// MedConnect — Controlador del Panel Administrativo
-// Ref: Arquitectura de Software — Sección 5.1 | SRS RF-09
+// MedConnect — Controlador del Panel Administrativo | SRS RF-09 | SCRUM-54
 // Acceso restringido: solo rol ADMIN (RBAC — RNF-08)
+/**
+ * Módulo de controladores para la gestión administrativa de médicos,
+ * asignación de horarios y mantenimiento de especialidades médicas.
+ */
 
 const { validationResult } = require('express-validator');
 const prisma = require('../config/prismaClient');
