@@ -112,7 +112,7 @@ async function create(req, res) {
 
 /**
  * PUT /api/citas/:id — Reagendar una cita existente
- * RF-06: Solo el paciente dueño puede reagendar
+ * SCRUM-46 | HU-06 | RF-06: Solo el paciente dueño puede reagendar; cancela recordatorio anterior
  */
 async function update(req, res) {
   const { id } = req.params;
@@ -159,7 +159,7 @@ async function update(req, res) {
 
 /**
  * DELETE /api/citas/:id — Cancelar una cita
- * RF-06: Si cancela con < 2h de anticipación → estado INASISTENCIA
+ * SCRUM-46 | HU-06 | RF-06: < 2h anticipación → INASISTENCIA; envía correo de confirmación
  */
 async function cancel(req, res) {
   const { id } = req.params;
