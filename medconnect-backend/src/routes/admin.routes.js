@@ -1,6 +1,10 @@
 // src/routes/admin.routes.js
-// MedConnect — Rutas del Panel Administrativo | SRS RF-09
+// MedConnect — Rutas del Panel Administrativo | SRS RF-09 | SCRUM-55
 // Acceso restringido: solo rol ADMIN (RBAC)
+/**
+ * Definición de endpoints administrativos para el registro de médicos,
+ * actualización de perfiles y mantenimiento del catálogo de especialidades.
+ */
 const express       = require('express');
 const { body }       = require('express-validator');
 const authMiddleware = require('../middleware/authMiddleware');
