@@ -1,6 +1,10 @@
 // tests/unit/admin.test.js
-// MedConnect — Pruebas Unitarias: Panel Administrativo
+// MedConnect — Pruebas Unitarias: Panel Administrativo | SCRUM-56
 // Cubre: RF-09 (gestión de médicos), RNF-08 (RBAC)
+/**
+ * Pruebas unitarias TDD para verificación de controladores administrativos
+ * y restricción de control de acceso basado en roles (RBAC).
+ */
 
 const { createMedico } = require('../../src/controllers/adminController');
 const prisma = require('../../src/config/prismaClient');
