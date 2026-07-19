@@ -2,7 +2,11 @@
 // MedConnect — Panel administrativo de médicos
 // Ref: SRS RF-09
 
-import React, { useState, useEffect } from 'react';
+/**
+ * src/pages/AdminPanel.jsx
+ * MedConnect — Panel de Administración (RF-09 | SCRUM-57)
+ * Interfaz administrativa para gestión de médicos, especialidades y asignación de horarios.
+ */
 import { adminAPI, especialidadesAPI } from '../services/api';
 import PageHeader from '../components/PageHeader';
 import LoadingSpinner from '../components/LoadingSpinner';
