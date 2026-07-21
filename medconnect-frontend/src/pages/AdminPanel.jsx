@@ -4,8 +4,9 @@
 
 /**
  * src/pages/AdminPanel.jsx
- * MedConnect — Panel de Administración (RF-09 | SCRUM-57, SCRUM-58)
- * Interfaz administrativa para gestión de médicos, validación de formularios de alta y asignación de horarios.
+ * MedConnect — Panel de Administración (RF-09 | SCRUM-57, SCRUM-58, SCRUM-59)
+ * Interfaz administrativa para gestión de médicos, validación de formularios de alta,
+ * asignación de horarios e invalidación de caché tras modificaciones.
  */
 import { adminAPI, especialidadesAPI } from '../services/api';
 import PageHeader from '../components/PageHeader';
