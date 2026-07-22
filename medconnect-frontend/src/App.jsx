@@ -1,8 +1,8 @@
 // src/App.jsx
 // MedConnect — Enrutamiento principal
-// SCRUM-41 | HU-04 | Rutas de especialidades, perfil médico y agendamiento
-// Ref: Arquitectura de Software — Sección 2.2.1 | SRS RF-03, RF-04, RF-06
-// Autor: Cristian Bayas | Sprint 2
+// SCRUM-41/49 | HU-04/HU-06 | Rutas completas del paciente
+// Ref: Arquitectura de Software — Sección 2.2.1 | SRS RF-03 a RF-10
+// Autor: Cristian Bayas | Sprint 2-3
 
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
@@ -13,6 +13,7 @@ import Register       from './pages/Register';
 import Especialidades from './pages/Especialidades';
 import MedicoDetalle  from './pages/MedicoDetalle';
 import AgendarCita    from './pages/AgendarCita';
+import MisCitas       from './pages/MisCitas';
 import AdminPanel     from './pages/AdminPanel';
 
 function RutaProtegida({ children, rolesPermitidos }) {
@@ -54,6 +55,11 @@ function AppRoutes() {
 
           <Route path="/especialidades" element={<Especialidades />} />
 
+          <Route path="/mis-citas" element={
+            <RutaProtegida rolesPermitidos={['PACIENTE']}>
+              <MisCitas />
+            </RutaProtegida>
+          } />
           <Route path="/medicos/:id" element={
             <RutaProtegida rolesPermitidos={['PACIENTE']}>
               <MedicoDetalle />

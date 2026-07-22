@@ -1,12 +1,12 @@
 // src/pages/MisCitas.jsx
-// MedConnect — Historial de citas del paciente (listado)
-// SCRUM-48 | HU-06 | Subtarea: Crear pages/MisCitas.jsx listado con filtros
-// RF-10: Historial con filtros por estado (CONFIRMADA, CANCELADA, etc.)
+// MedConnect — Historial de citas del paciente
+// SCRUM-48/49 | HU-06 | Listado, reagendar y cancelar con modal
+// RF-06: Reagendar/cancelar | RF-10: Historial con filtros
 // Autor: Cristian Bayas | Sprint 3 — EP-03 Agendamiento de Citas
 
 import React, { useState, useEffect } from 'react';
 import dayjs from 'dayjs';
-import { citasAPI } from '../services/api';
+import { citasAPI, medicosAPI } from '../services/api';
 import PageHeader from '../components/PageHeader';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -30,6 +30,12 @@ export default function MisCitas() {
   const [filtroEstado, setFiltroEstado] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [mensaje, setMensaje] = useState('');
+  const [citaReagendar, setCitaReagendar] = useState(null);
+  const [nuevaFecha, setNuevaFecha] = useState('');
+  const [nuevaHora, setNuevaHora] = useState('');
+  const [slots, setSlots] = useState([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
 
   useEffect(() => {
     cargarCitas();
@@ -49,20 +55,74 @@ export default function MisCitas() {
     }
   }
 
+  async function handleCancelar(id) {
+    if (!window.confirm('¿Estás seguro de cancelar esta cita?')) return;
+    setMensaje('');
+    try {
+      const res = await citasAPI.cancel(id);
+      setMensaje(res.data.mensaje);
+      cargarCitas();
+    } catch (err) {
+      setError(err.response?.data?.mensaje || 'Error al cancelar la cita.');
+    }
+  }
+
+  async function abrirReagendar(cita) {
+    setCitaReagendar(cita);
+    setNuevaFecha(dayjs(cita.fecha).format('YYYY-MM-DD'));
+    setNuevaHora(cita.hora);
+    setSlots([]);
+  }
+
+  async function cargarSlots(medicoId, fecha) {
+    if (!fecha) return;
+    setLoadingSlots(true);
+    try {
+      const res = await medicosAPI.getDisponibilidad(medicoId, fecha);
+      setSlots(res.data.slots || []);
+    } catch (err) {
+      setError('No se pudo cargar la disponibilidad.');
+    } finally {
+      setLoadingSlots(false);
+    }
+  }
+
+  useEffect(() => {
+    if (citaReagendar && nuevaFecha) {
+      cargarSlots(citaReagendar.medicoId, nuevaFecha);
+    }
+  }, [citaReagendar, nuevaFecha]);
+
+  async function handleReagendar(e) {
+    e.preventDefault();
+    setMensaje('');
+    try {
+      await citasAPI.update(citaReagendar.id, { fecha: nuevaFecha, hora: nuevaHora });
+      setMensaje('Cita reagendada exitosamente.');
+      setCitaReagendar(null);
+      cargarCitas();
+    } catch (err) {
+      setError(err.response?.data?.mensaje || 'Error al reagendar la cita.');
+    }
+  }
+
+  const puedeModificar = (estado) => ['CONFIRMADA', 'REAGENDADA'].includes(estado);
+
   return (
     <div className="container mc-page">
       <PageHeader
         align="left"
         eyebrow="Tu salud"
         title="Mis Citas"
-        subtitle="Consulta el historial de tus citas médicas."
+        subtitle="Consulta, reagenda o cancela tus citas médicas."
       />
 
       <div className="mc-hint">
         <span className="mc-hint-icon">📋</span>
-        <span>Usa los filtros para ver citas confirmadas, canceladas o reagendadas.</span>
+        <span>Usa los filtros para ver citas confirmadas, canceladas o reagendadas. Solo puedes modificar citas activas.</span>
       </div>
 
+      {mensaje && <div className="mc-alert mc-alert-success">{mensaje}</div>}
       {error && <div className="mc-alert mc-alert-danger">{error}</div>}
 
       <div className="mc-filter-group mb-4">
@@ -100,13 +160,86 @@ export default function MisCitas() {
                 <p className="mc-text-primary small fw-semibold mb-3">
                   {cita.medico?.especialidad?.nombre}
                 </p>
-                <div className="small mb-0">
+                <div className="small mb-3">
                   <p className="mb-1">📅 {dayjs(cita.fecha).format('DD/MM/YYYY')}</p>
                   <p className="mb-0">🕐 {cita.hora}</p>
                 </div>
+                {puedeModificar(cita.estado) && (
+                  <div className="d-flex gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      className="mc-btn mc-btn-outline mc-btn-sm flex-fill"
+                      onClick={() => abrirReagendar(cita)}
+                    >
+                      Reagendar
+                    </button>
+                    <button
+                      type="button"
+                      className="mc-btn mc-btn-outline-danger mc-btn-sm flex-fill"
+                      onClick={() => handleCancelar(cita.id)}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* SCRUM-49: Modal de reagendamiento con horarios del mismo médico (RF-06) */}
+      {citaReagendar && (
+        <div className="mc-modal-backdrop" role="dialog" aria-modal="true">
+          <div className="mc-modal">
+            <form onSubmit={handleReagendar}>
+              <div className="mc-modal-header">
+                <h5 className="mc-modal-title">Reagendar cita</h5>
+                <button type="button" className="mc-btn-close" onClick={() => setCitaReagendar(null)}>
+                  ✕
+                </button>
+              </div>
+              <div className="mc-modal-body">
+                <div className="mb-3">
+                  <label className="mc-form-label">Nueva fecha</label>
+                  <input
+                    type="date"
+                    className="form-control mc-input w-100"
+                    value={nuevaFecha}
+                    min={dayjs().format('YYYY-MM-DD')}
+                    onChange={(e) => setNuevaFecha(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="mb-0">
+                  <label className="mc-form-label">Nueva hora</label>
+                  {loadingSlots ? (
+                    <LoadingSpinner label="Cargando horarios..." />
+                  ) : (
+                    <select
+                      className="form-select mc-input w-100"
+                      value={nuevaHora}
+                      onChange={(e) => setNuevaHora(e.target.value)}
+                      required
+                    >
+                      <option value="">Selecciona un horario</option>
+                      {slots.filter((s) => s.disponible).map((s) => (
+                        <option key={s.hora} value={s.hora}>{s.hora}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              </div>
+              <div className="mc-modal-footer">
+                <button type="button" className="mc-btn mc-btn-ghost" onClick={() => setCitaReagendar(null)}>
+                  Cerrar
+                </button>
+                <button type="submit" className="mc-btn mc-btn-primary">
+                  Confirmar
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
