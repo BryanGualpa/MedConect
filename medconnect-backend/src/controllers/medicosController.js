@@ -1,6 +1,9 @@
 // src/controllers/medicosController.js
-// MedConnect — Controlador de Médicos
-// Ref: Arquitectura de Software — Sección 5.1 | SRS RF-04, RF-05, RF-08
+// MedConnect — Controlador de Médicos | SRS RF-04, RF-05, RF-08 | SCRUM-51
+/**
+ * Controlador de médicos: perfil público, horarios de disponibilidad
+ * y consulta de dashboard / agenda personal del médico autenticado.
+ */
 
 const prisma = require('../config/prismaClient');
 const { getHorariosLibres } = require('../services/disponibilidadService');
