@@ -1,5 +1,8 @@
-// src/pages/AgendaMedico.jsx
-// MedConnect — Agenda semanal del médico
+/**
+ * src/pages/AgendaMedico.jsx
+ * MedConnect — Agenda Médica Semanal (RF-08 | SCRUM-52)
+ * Componente interactivo para la consulta de citas agendadas por día y horario.
+ */
 
 import React, { useState, useEffect } from 'react';
 import dayjs from 'dayjs';
