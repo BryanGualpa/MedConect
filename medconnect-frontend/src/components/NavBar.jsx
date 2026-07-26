@@ -1,204 +1,119 @@
 // src/components/NavBar.jsx
-// MedConnect — Barra de Navegación Principal
-// Ref: Arquitectura de Software — Sección 6 | SRS RF-02, RNF-04
-// Muestra enlaces según el rol del usuario (AuthContext)
+// MedConnect — Barra de Navegación Principal (tema pastel responsive)
 
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-/**
- * Barra de navegación responsiva (Bootstrap 5).
- * Adapta los enlaces visibles según el rol del usuario autenticado:
- *   - PACIENTE: Especialidades, Mis Citas
- *   - MEDICO:   Mi Agenda
- *   - ADMIN:    Panel Administrativo
- *   - Sin sesión: Login, Registro
- */
 export default function NavBar() {
-  const { usuario, estaAutenticado, esPaciente, esMedico, esAdmin, logout } =
-    useAuth();
+  const { usuario, estaAutenticado, esPaciente, esMedico, esAdmin, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [menuAbierto, setMenuAbierto] = useState(false);
 
   function handleLogout() {
     logout();
     navigate('/login');
+    setMenuAbierto(false);
   }
 
-  const styles = {
-    nav: {
-      background: 'linear-gradient(135deg, #102a43 0%, #243b53 100%)',
-      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-      borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-      padding: '0.75rem 0'
-    },
-    brand: {
-      fontSize: '1.35rem',
-      letterSpacing: '0.5px',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.5rem'
-    },
-    brandText: {
-      fontWeight: '800',
-      color: '#ffffff'
-    },
-    brandSubtext: {
-      fontWeight: '400',
-      color: '#38bec9'
-    },
-    navLink: {
-      fontWeight: '500',
-      color: 'rgba(255, 255, 255, 0.85)',
-      padding: '0.5rem 0.85rem',
-      borderRadius: '6px',
-      transition: 'all 0.2s ease'
-    },
-    userContainer: {
-      background: 'rgba(255, 255, 255, 0.07)',
-      padding: '0.35rem 0.9rem',
-      borderRadius: '30px',
-      border: '1px solid rgba(255, 255, 255, 0.12)',
-      display: 'flex',
-      alignItems: 'center'
-    },
-    badge: {
-      fontSize: '0.7rem',
-      fontWeight: '700',
-      textTransform: 'uppercase',
-      letterSpacing: '0.5px',
-      background: '#38bec9',
-      color: '#102a43',
-      borderRadius: '20px',
-      padding: '0.25rem 0.6rem'
-    },
-    btnLogout: {
-      borderRadius: '30px',
-      padding: '0.35rem 1.1rem',
-      border: '1px solid rgba(255, 255, 255, 0.35)',
-      background: 'transparent',
-      color: '#ffffff',
-      fontSize: '0.85rem',
-      fontWeight: '600',
-      transition: 'all 0.2s ease'
-    },
-    btnRegister: {
-      borderRadius: '30px',
-      padding: '0.35rem 1.1rem',
-      border: '1px solid #38bec9',
-      background: '#38bec9',
-      color: '#102a43',
-      fontSize: '0.85rem',
-      fontWeight: '600',
-      transition: 'all 0.2s ease'
-    }
-  };
+  function navClass(path) {
+    return `nav-link mc-nav-link ${location.pathname === path ? 'active' : ''}`;
+  }
+
+  function cerrarMenu() {
+    setMenuAbierto(false);
+  }
 
   return (
-    <nav
-      className="navbar navbar-expand-lg navbar-dark"
-      style={styles.nav}
-      aria-label="Barra de navegación principal"
-    >
+    <nav className="mc-navbar" aria-label="Barra de navegación principal">
       <div className="container">
-        {/* Logo / marca */}
-        <Link className="navbar-brand fw-bold" to="/" style={styles.brand}>
-          <span>🏥</span>
-          <div>
-            <span style={styles.brandText}>Med</span>
-            <span style={styles.brandSubtext}>Connect</span>
+        <div className="d-flex align-items-center justify-content-between">
+          <Link className="mc-brand" to="/" onClick={cerrarMenu}>
+            <div className="mc-brand-icon" aria-hidden="true">🏥</div>
+            <div className="mc-brand-text">
+              Med<span>Connect</span>
+            </div>
+          </Link>
+
+          <button
+            type="button"
+            className="mc-nav-toggle d-lg-none"
+            aria-label={menuAbierto ? 'Cerrar menú' : 'Abrir menú'}
+            aria-expanded={menuAbierto}
+            onClick={() => setMenuAbierto(!menuAbierto)}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+
+          <div className={`${menuAbierto ? 'd-block' : 'd-none'} d-lg-flex flex-lg-row flex-column align-items-lg-center w-100 w-lg-auto mc-nav-menu`}>
+            <ul className="navbar-nav me-lg-auto mb-2 mb-lg-0 flex-row flex-wrap gap-1">
+              <li className="nav-item">
+                <Link className={navClass('/especialidades')} to="/especialidades" onClick={cerrarMenu}>
+                  Especialidades
+                </Link>
+              </li>
+              {esPaciente && (
+                <li className="nav-item">
+                  <Link className={navClass('/mis-citas')} to="/mis-citas" onClick={cerrarMenu}>
+                    Mis Citas
+                  </Link>
+                </li>
+              )}
+              {esMedico && (
+                <li className="nav-item">
+                  <Link className={navClass('/agenda')} to="/agenda" onClick={cerrarMenu}>
+                    Mi Agenda
+                  </Link>
+                </li>
+              )}
+              {esAdmin && (
+                <li className="nav-item">
+                  <Link className={navClass('/admin')} to="/admin" onClick={cerrarMenu}>
+                    Panel Admin
+                  </Link>
+                </li>
+              )}
+            </ul>
+
+            <ul className="navbar-nav ms-lg-auto align-items-lg-center gap-2 mc-nav-actions">
+              {estaAutenticado ? (
+                <>
+                  <li className="nav-item">
+                    <div className="mc-user-chip">
+                      <span>Hola, <strong>{usuario?.nombre?.split(' ')[0]}</strong></span>
+                      <span className="mc-role-badge">{usuario?.rol}</span>
+                    </div>
+                  </li>
+                  <li className="nav-item">
+                    <button
+                      type="button"
+                      className="mc-btn mc-btn-ghost mc-btn-sm"
+                      onClick={handleLogout}
+                      data-testid="btn-logout"
+                    >
+                      Cerrar sesión
+                    </button>
+                  </li>
+                </>
+              ) : (
+                <>
+                  <li className="nav-item">
+                    <Link className={navClass('/login')} to="/login" onClick={cerrarMenu}>
+                      Iniciar sesión
+                    </Link>
+                  </li>
+                  <li className="nav-item">
+                    <Link className="mc-btn mc-btn-primary mc-btn-sm" to="/register" onClick={cerrarMenu}>
+                      Registrarse
+                    </Link>
+                  </li>
+                </>
+              )}
+            </ul>
           </div>
-        </Link>
-
-        {/* Botón hamburguesa (móvil) */}
-        <button
-          className="navbar-toggler border-0"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarMain"
-          aria-controls="navbarMain"
-          aria-expanded="false"
-          aria-label="Abrir menú"
-        >
-          <span className="navbar-toggler-icon" />
-        </button>
-
-        {/* Menú colapsable */}
-        <div className="collapse navbar-collapse" id="navbarMain">
-          <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-            {/* ── Enlace público ─────────────────────────────── */}
-            <li className="nav-item">
-              <Link className="nav-link" style={styles.navLink} to="/especialidades">
-                Especialidades
-              </Link>
-            </li>
-
-            {/* ── Sección PACIENTE ───────────────────────────── */}
-            {esPaciente && (
-              <li className="nav-item">
-                <Link className="nav-link" style={styles.navLink} to="/mis-citas">
-                  Mis Citas
-                </Link>
-              </li>
-            )}
-
-            {/* ── Sección MEDICO ─────────────────────────────── */}
-            {esMedico && (
-              <li className="nav-item">
-                <Link className="nav-link" style={styles.navLink} to="/agenda">
-                  Mi Agenda
-                </Link>
-              </li>
-            )}
-
-            {/* ── Sección ADMIN ──────────────────────────────── */}
-            {esAdmin && (
-              <li className="nav-item">
-                <Link className="nav-link" style={styles.navLink} to="/admin">
-                  Panel Administrativo
-                </Link>
-              </li>
-            )}
-          </ul>
-
-          {/* ── Zona de usuario ──────────────────────────────── */}
-          <ul className="navbar-nav ms-auto align-items-center gap-2">
-            {estaAutenticado ? (
-              <>
-                <li className="nav-item d-flex align-items-center me-2">
-                  <div style={styles.userContainer}>
-                    <span className="navbar-text text-white small p-0">
-                      Hola, <strong className="text-white">{usuario?.nombre?.split(' ')[0]}</strong>
-                    </span>
-                    <span className="badge ms-2" style={styles.badge}>{usuario?.rol}</span>
-                  </div>
-                </li>
-                <li className="nav-item">
-                  <button
-                    className="btn"
-                    style={styles.btnLogout}
-                    onClick={handleLogout}
-                    data-testid="btn-logout"
-                  >
-                    Cerrar sesión
-                  </button>
-                </li>
-              </>
-            ) : (
-              <>
-                <li className="nav-item">
-                  <Link className="nav-link" style={styles.navLink} to="/login">
-                    Iniciar sesión
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <Link className="btn btn-sm" style={styles.btnRegister} to="/register">
-                    Registrarse
-                  </Link>
-                </li>
-              </>
-            )}
-          </ul>
         </div>
       </div>
     </nav>

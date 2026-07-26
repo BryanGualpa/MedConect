@@ -53,6 +53,7 @@ export const especialidadesAPI = {
 
 // Médicos (RF-04, RF-05, RF-08)
 export const medicosAPI = {
+  getMe:           ()             => api.get('/medicos/me'),
   getById:         (id)           => api.get(`/medicos/${id}`),
   getDisponibilidad: (id, fecha)  => api.get(`/medicos/${id}/disponibilidad`, { params: { fecha } }),
   getAgenda:       (id, semana)   => api.get(`/medicos/${id}/agenda`, { params: { semana } })

@@ -18,9 +18,7 @@ router.post(
   '/register',
   [
     body('nombre').notEmpty().withMessage('El nombre es requerido'),
-    body('cedula')
-      .isLength({ min: 10, max: 10 }).withMessage('Cédula debe tener 10 dígitos')
-      .isNumeric().withMessage('La cédula solo debe contener números'),
+    body('cedula').isLength({ min: 10, max: 10 }).withMessage('Cédula debe tener 10 dígitos'),
     body('correo').isEmail().withMessage('Correo electrónico inválido'),
     body('contrasena')
       .isLength({ min: 8 }).withMessage('La contraseña debe tener mínimo 8 caracteres')

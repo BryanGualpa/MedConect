@@ -1,5 +1,5 @@
 // src/App.jsx
-// MedConnect — Enrutamiento principal
+// MedConnect — Enrutamiento principal (Sprint 1)
 // Ref: Arquitectura de Software — Sección 2.2.1 | SRS RF-01, RF-02, RNF-08
 // Gestiona rutas públicas y protegidas con redirección por rol
 
@@ -10,7 +10,7 @@ import NavBar from './components/NavBar';
 import Login    from './pages/Login';
 import Register from './pages/Register';
 
-// ── Placeholders para páginas aún no implementadas ───────────────────────────
+// ── Placeholders para páginas de Sprints posteriores (Sprint 2 y 3) ─────────
 function Especialidades()    { return <div className="container mt-4"><h2>Especialidades</h2></div>; }
 function MisCitas()          { return <div className="container mt-4"><h2>Mis Citas</h2></div>; }
 function Agenda()            { return <div className="container mt-4"><h2>Mi Agenda</h2></div>; }
